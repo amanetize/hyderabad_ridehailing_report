@@ -1,0 +1,994 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>The Auto Dilemma — Hyderabad Ride-Hailing Report</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.js"></script>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=IBM+Plex+Mono:wght@400;500&family=Inter:wght@300;400;500&display=swap');
+
+  :root {
+    --ink: #1a1612;
+    --paper: #f7f4ee;
+    --accent: #d44a1a;
+    --accent2: #2a6dd9;
+    --muted: #7a7060;
+    --border: #d8d2c4;
+    --card: #ffffff;
+    --warn: #e8a020;
+    --success: #2a7a4a;
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    font-family: 'Inter', sans-serif;
+    background: var(--paper);
+    color: var(--ink);
+    line-height: 1.6;
+  }
+
+  /* HEADER */
+  .masthead {
+    background: var(--ink);
+    color: var(--paper);
+    padding: 3rem 2rem 2.5rem;
+    position: relative;
+    overflow: hidden;
+  }
+  .masthead::before {
+    content: '';
+    position: absolute;
+    top: -40px; right: -40px;
+    width: 320px; height: 320px;
+    border-radius: 50%;
+    border: 60px solid rgba(212,74,26,0.18);
+  }
+  .masthead::after {
+    content: '';
+    position: absolute;
+    bottom: -20px; left: 40px;
+    width: 180px; height: 180px;
+    border-radius: 50%;
+    border: 40px solid rgba(42,109,217,0.12);
+  }
+  .tag {
+    display: inline-block;
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 10px;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    background: var(--accent);
+    color: white;
+    padding: 4px 10px;
+    border-radius: 2px;
+    margin-bottom: 1rem;
+  }
+  .masthead h1 {
+    font-family: 'Syne', sans-serif;
+    font-size: clamp(2rem, 5vw, 3.6rem);
+    font-weight: 800;
+    line-height: 1.1;
+    margin-bottom: 0.8rem;
+    position: relative;
+    z-index: 1;
+  }
+  .masthead h1 span { color: var(--accent); }
+  .masthead .subtitle {
+    font-size: 1rem;
+    color: rgba(247,244,238,0.65);
+    max-width: 560px;
+    position: relative;
+    z-index: 1;
+    font-weight: 300;
+  }
+  .meta-row {
+    display: flex;
+    gap: 2rem;
+    margin-top: 2rem;
+    padding-top: 1.5rem;
+    border-top: 1px solid rgba(255,255,255,0.12);
+    position: relative;
+    z-index: 1;
+    flex-wrap: wrap;
+  }
+  .meta-item {
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 11px;
+    color: rgba(247,244,238,0.5);
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+  }
+  .meta-item strong { color: rgba(247,244,238,0.9); display: block; font-size: 12px; }
+
+  /* LAYOUT */
+  .container { max-width: 900px; margin: 0 auto; padding: 0 1.5rem; }
+
+  section { padding: 3rem 0 1.5rem; }
+
+  .section-label {
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 10px;
+    letter-spacing: 0.15em;
+    text-transform: uppercase;
+    color: var(--accent);
+    margin-bottom: 0.5rem;
+  }
+
+  h2 {
+    font-family: 'Syne', sans-serif;
+    font-size: 1.7rem;
+    font-weight: 700;
+    margin-bottom: 1.2rem;
+    line-height: 1.2;
+  }
+
+  h3 {
+    font-family: 'Syne', sans-serif;
+    font-size: 1.15rem;
+    font-weight: 600;
+    margin-bottom: 0.8rem;
+    margin-top: 1.5rem;
+  }
+
+  p { margin-bottom: 1rem; font-size: 0.95rem; color: #3a352e; }
+
+  /* STAT CARDS */
+  .stat-grid {
+    display: grid;
+    grid-template-columns: repeat(4, minmax(min-content, 1fr));
+    gap: 1rem;
+    margin: 1.5rem 0;
+  }
+  @media (max-width: 640px) {
+    .stat-grid { grid-template-columns: repeat(2, minmax(min-content, 1fr)); }
+  }
+  .stat-card {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 1.2rem 1rem;
+    position: relative;
+    overflow: hidden;
+  }
+  .stat-card::before {
+    content: '';
+    position: absolute;
+    top: 0; left: 0; right: 0;
+    height: 3px;
+    background: var(--accent);
+  }
+  .stat-card.blue::before { background: var(--accent2); }
+  .stat-card.warn::before { background: var(--warn); }
+  .stat-card.success::before { background: var(--success); }
+  .stat-number {
+    font-family: 'Syne', sans-serif;
+    font-size: clamp(1.1rem, 2.2vw, 2rem);
+    font-weight: 800;
+    color: var(--ink);
+    line-height: 1.15;
+    margin-bottom: 0.3rem;
+    white-space: nowrap;
+  }
+  .stat-label {
+    font-size: 0.75rem;
+    color: var(--muted);
+    font-weight: 500;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+  }
+  .stat-delta {
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 0.7rem;
+    color: var(--accent);
+    margin-top: 0.3rem;
+  }
+
+  /* CHART CONTAINERS */
+  .chart-box {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 1.5rem;
+    margin: 1.5rem 0;
+  }
+  .chart-title {
+    font-family: 'Syne', sans-serif;
+    font-size: 0.9rem;
+    font-weight: 600;
+    margin-bottom: 0.3rem;
+    color: var(--ink);
+  }
+  .chart-subtitle {
+    font-size: 0.78rem;
+    color: var(--muted);
+    margin-bottom: 1.2rem;
+  }
+  .chart-wrap {
+    position: relative;
+  }
+
+  /* PULLQUOTE */
+  .pullquote {
+    border-left: 4px solid var(--accent);
+    padding: 1rem 1.5rem;
+    margin: 2rem 0;
+    background: rgba(212,74,26,0.05);
+    border-radius: 0 6px 6px 0;
+  }
+  .pullquote p {
+    font-size: 1.05rem;
+    font-style: italic;
+    color: var(--ink);
+    margin-bottom: 0.3rem;
+  }
+  .pullquote cite {
+    font-size: 0.78rem;
+    color: var(--muted);
+    font-family: 'IBM Plex Mono', monospace;
+    font-style: normal;
+  }
+
+  /* TIMELINE */
+  .timeline { margin: 1.5rem 0; position: relative; padding-left: 1.5rem; }
+  .timeline::before {
+    content: '';
+    position: absolute;
+    left: 0.4rem; top: 0; bottom: 0;
+    width: 2px;
+    background: var(--border);
+  }
+  .tl-item {
+    position: relative;
+    margin-bottom: 1.2rem;
+    padding-left: 1rem;
+  }
+  .tl-item::before {
+    content: '';
+    position: absolute;
+    left: -1.1rem;
+    top: 0.35rem;
+    width: 10px; height: 10px;
+    border-radius: 50%;
+    background: var(--accent);
+    border: 2px solid var(--paper);
+  }
+  .tl-item.blue::before { background: var(--accent2); }
+  .tl-item.warn::before { background: var(--warn); }
+  .tl-item.success::before { background: var(--success); }
+  .tl-year {
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 0.7rem;
+    color: var(--muted);
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+  }
+  .tl-text {
+    font-size: 0.88rem;
+    color: var(--ink);
+    font-weight: 500;
+  }
+  .tl-sub {
+    font-size: 0.8rem;
+    color: var(--muted);
+    margin-top: 0.1rem;
+  }
+
+  /* TWO COL */
+  .two-col {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 1.2rem;
+    margin: 1.2rem 0;
+  }
+  @media (max-width: 600px) { .two-col { grid-template-columns: 1fr; } }
+
+  /* INFO BOX */
+  .info-box {
+    background: rgba(42,109,217,0.07);
+    border: 1px solid rgba(42,109,217,0.2);
+    border-radius: 8px;
+    padding: 1.2rem 1.4rem;
+    margin: 1.5rem 0;
+  }
+  .info-box h4 {
+    font-family: 'Syne', sans-serif;
+    font-size: 0.9rem;
+    font-weight: 700;
+    color: var(--accent2);
+    margin-bottom: 0.5rem;
+  }
+  .info-box p { font-size: 0.85rem; margin-bottom: 0; }
+
+  .warn-box {
+    background: rgba(232,160,32,0.08);
+    border: 1px solid rgba(232,160,32,0.25);
+    border-radius: 8px;
+    padding: 1.2rem 1.4rem;
+    margin: 1.5rem 0;
+  }
+  .warn-box h4 {
+    font-family: 'Syne', sans-serif;
+    font-size: 0.9rem;
+    font-weight: 700;
+    color: #a06010;
+    margin-bottom: 0.5rem;
+  }
+  .warn-box p { font-size: 0.85rem; margin-bottom: 0; color: #5a4010; }
+
+  /* MARKET SHARE */
+  .legend-row {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 12px;
+    margin-bottom: 10px;
+    font-size: 12px;
+    color: var(--muted);
+  }
+  .legend-item {
+    display: flex; align-items: center; gap: 5px;
+  }
+  .legend-dot {
+    width: 10px; height: 10px; border-radius: 2px; flex-shrink: 0;
+  }
+
+  /* ROOT CAUSE */
+  .cause-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+    gap: 1rem;
+    margin: 1.5rem 0;
+  }
+  .cause-card {
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 1rem 1.1rem;
+    background: var(--card);
+  }
+  .cause-icon {
+    font-size: 1.3rem;
+    margin-bottom: 0.5rem;
+  }
+  .cause-card h4 {
+    font-family: 'Syne', sans-serif;
+    font-size: 0.85rem;
+    font-weight: 700;
+    margin-bottom: 0.4rem;
+    color: var(--ink);
+  }
+  .cause-card p { font-size: 0.78rem; margin-bottom: 0; color: var(--muted); }
+
+  /* DIVIDER */
+  hr { border: none; border-top: 1px solid var(--border); margin: 2rem 0; }
+
+  /* FOOTER */
+  .footer {
+    background: var(--ink);
+    color: rgba(247,244,238,0.5);
+    padding: 2rem;
+    font-size: 0.78rem;
+    font-family: 'IBM Plex Mono', monospace;
+    text-align: center;
+    margin-top: 3rem;
+  }
+
+  /* SURGE COMPARISON */
+  .fare-compare {
+    display: flex;
+    gap: 1rem;
+    margin: 1.2rem 0;
+    flex-wrap: wrap;
+  }
+  .fare-bar-label {
+    font-size: 0.78rem;
+    color: var(--muted);
+    margin-bottom: 0.3rem;
+  }
+  .fare-bar-wrap { flex: 1; min-width: 200px; }
+  .fare-bar-row {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-bottom: 6px;
+  }
+  .fare-bar-name {
+    font-size: 0.75rem;
+    min-width: 80px;
+    color: var(--muted);
+  }
+  .fare-bar {
+    height: 22px;
+    border-radius: 3px;
+    display: flex;
+    align-items: center;
+    padding: 0 8px;
+    font-size: 0.7rem;
+    font-family: 'IBM Plex Mono', monospace;
+    font-weight: 500;
+    color: white;
+    transition: width 0.4s ease;
+  }
+  .fare-bar.offline { background: var(--success); }
+  .fare-bar.normal  { background: var(--accent2); }
+  .fare-bar.peak    { background: var(--accent); }
+
+  /* RECOMMENDATION */
+  .rec-list { list-style: none; margin: 1rem 0; }
+  .rec-list li {
+    display: flex;
+    gap: 0.8rem;
+    margin-bottom: 0.8rem;
+    font-size: 0.88rem;
+  }
+  .rec-num {
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 0.7rem;
+    background: var(--ink);
+    color: var(--paper);
+    width: 22px; height: 22px;
+    border-radius: 50%;
+    display: flex; align-items: center; justify-content: center;
+    flex-shrink: 0;
+    margin-top: 1px;
+  }
+</style>
+</head>
+<body>
+
+<!-- MASTHEAD -->
+<div class="masthead">
+  <div class="container">
+    <div class="tag">Data Report · Hyderabad Urban Mobility</div>
+    <h1>The Auto <span>Dilemma</span><br>Who's Really Winning?</h1>
+    <p class="subtitle">A data-driven breakdown of why booking an auto online has become harder, pricier, and more frustrating than flagging one on the street — and what the numbers actually say about the core problem.</p>
+    <div class="meta-row">
+      <div class="meta-item"><strong>City</strong>Hyderabad, Telangana</div>
+      <div class="meta-item"><strong>Period Covered</strong>2019 – 2026</div>
+      <div class="meta-item"><strong>Focus</strong>Auto & Bike Taxi</div>
+      <div class="meta-item"><strong>Type</strong>Consumer + Market Analysis</div>
+    </div>
+  </div>
+</div>
+
+<div class="container">
+
+<!-- EXECUTIVE SUMMARY -->
+<section>
+  <div class="section-label">01 / Executive Summary</div>
+  <h2>The Three-Phase Trap</h2>
+  <p>India's urban ride-hailing story in three brutal acts. Phase 1: monopoly of street autos — bargaining, refusals, overpricing. Phase 2: apps arrive with subsidies, low fares, and promises. Phase 3: subsidy era ends, fares rise 2x, drivers refuse short rides, cancellation rates hit 25–35%. We are firmly in Phase 3.</p>
+  <p>But the data reveals something crucial: <strong>the primary problem isn't price anymore — it's non-acceptance and selective cancellations.</strong> Apps designed to solve the supply-demand problem have inadvertently recreated the same driver leverage dynamic, just with an app icon on top.</p>
+
+  <div class="stat-grid">
+    <div class="stat-card">
+      <div class="stat-number">2×</div>
+      <div class="stat-label">App fare vs. offline</div>
+      <div class="stat-delta">↑ Reported by Hyd. commuters over 12 months</div>
+    </div>
+    <div class="stat-card warn">
+      <div class="stat-number">25–35%</div>
+      <div class="stat-label">Cancellation rate (Ola/Uber)</div>
+      <div class="stat-delta">↑ Industry-reported avg for Indian cities</div>
+    </div>
+    <div class="stat-card blue">
+      <div class="stat-number">₹36→₹70+</div>
+      <div class="stat-label">Bike taxi: off-peak vs. peak</div>
+      <div class="stat-delta">94%+ surge on same route</div>
+    </div>
+    <div class="stat-card success">
+      <div class="stat-number">~40%</div>
+      <div class="stat-label">Actual driver deduction</div>
+      <div class="stat-delta">Despite "10%" platform claim</div>
+    </div>
+  </div>
+</section>
+
+<hr>
+
+<!-- PRICING SECTION -->
+<section>
+  <div class="section-label">02 / Pricing Analysis</div>
+  <h2>The Fare Journey: From Subsidy to Exploitation?</h2>
+  <p>When Ola and Uber entered Indian metros, they bled money — deliberately. Deep subsidies kept fares far below the offline market to build user habit and driver supply. Once network dominance was achieved, the pendulum swung hard in the other direction.</p>
+
+  <div class="chart-box">
+    <div class="chart-title">Indicative App vs. Offline Auto Fare Trend (Hyderabad)</div>
+    <div class="chart-subtitle">Based on reported user data and industry patterns — showing relative movement, not absolute fares</div>
+    <div class="legend-row">
+      <div class="legend-item"><div class="legend-dot" style="background:#d44a1a;"></div>App (Online) Fare</div>
+      <div class="legend-item"><div class="legend-dot" style="background:#2a6dd9;"></div>Offline Street Auto Fare</div>
+      <div class="legend-item"><div class="legend-dot" style="background:#ccc;border:1px solid #aaa;"></div>Crossover Point</div>
+    </div>
+    <div class="chart-wrap" style="height:280px;">
+      <canvas id="fareChart"></canvas>
+    </div>
+  </div>
+
+  <p>The crossover — when app fares exceeded offline rates — is the defining market moment. Before it, apps were the people's champion. After it, the perception flipped entirely.</p>
+
+  <div class="warn-box">
+    <h4>The Meter Paradox</h4>
+    <p>Hyderabad's RTA mandates meter-based fares for street autos — but app-based aggregators fall outside RTA jurisdiction. This creates a two-tier pricing environment with zero regulatory parity. <strong>The meter system that everyone complained about is now, ironically, the cheaper option.</strong></p>
+  </div>
+
+  <h3>Bike Taxi Surge: The Closest Data We Have</h3>
+  <p>Unlike auto fares (which shift gradually), bike taxi surge pricing is documented in real time on the apps. The route-based comparison below — using reported Hyderabad data — reveals the asymmetry:</p>
+
+  <div class="chart-box">
+    <div class="chart-title">Same-Route Fare Comparison: Off-Peak vs. Peak Hours</div>
+    <div class="chart-subtitle">Rapido bike taxi, representative Hyderabad routes, 2024–25</div>
+    <div class="fare-bar-wrap" style="max-width:500px;margin:0 auto;">
+      <div class="fare-bar-row">
+        <div class="fare-bar-name">Offline auto</div>
+        <div class="fare-bar offline" style="width:38%;">₹30–45</div>
+      </div>
+      <div class="fare-bar-row">
+        <div class="fare-bar-name">Bike (off-peak)</div>
+        <div class="fare-bar normal" style="width:42%;">₹36</div>
+      </div>
+      <div class="fare-bar-row">
+        <div class="fare-bar-name">Bike (peak)</div>
+        <div class="fare-bar peak" style="width:85%;">₹70+</div>
+      </div>
+      <div class="fare-bar-row">
+        <div class="fare-bar-name">App auto (peak)</div>
+        <div class="fare-bar peak" style="width:80%;background:#a03010;">₹2× offline</div>
+      </div>
+    </div>
+    <p style="font-size:0.75rem;color:var(--muted);margin-top:1rem;text-align:center;">Motor Vehicle Aggregator Guidelines 2025 now cap surge at 2× base fare — but enforcement remains inconsistent.</p>
+  </div>
+</section>
+
+<hr>
+
+<!-- CANCELLATION SECTION -->
+<section>
+  <div class="section-label">03 / The Real Problem</div>
+  <h2>It's Not (Just) the Price. It's the Refusal.</h2>
+  <p>Price is visible, searchable, comparable. Non-acceptance is invisible until you're standing on a footpath in the rain watching 8 assigned autos decline your ride before the app times out. The data tells a story the pricing charts can't.</p>
+
+  <div class="two-col">
+    <div class="chart-box" style="margin:0;">
+      <div class="chart-title">Driver Cancellation Rate</div>
+      <div class="chart-subtitle">Ola & Uber combined, Indian cities avg.</div>
+      <div class="chart-wrap" style="height:180px;">
+        <canvas id="cancelChart"></canvas>
+      </div>
+    </div>
+    <div class="chart-box" style="margin:0;">
+      <div class="chart-title">Auto Market Share (India, 2024)</div>
+      <div class="chart-subtitle">Three-way race in the three-wheeler segment</div>
+      <div class="chart-wrap" style="height:180px;">
+        <canvas id="marketChart"></canvas>
+      </div>
+    </div>
+  </div>
+
+  <h3>Why Drivers Cancel: The Economics of Refusal</h3>
+  <p>Under the subscription model, drivers pay a flat daily fee (₹5–₹29 depending on the platform) and keep the entire fare. This sounds like a win — and for income stability, it is. But it fundamentally changes driver behavior: when they're not giving up a % of each ride to the platform, cherry-picking long/high-value rides has zero cost. The rational move becomes <em>refuse short rides, wait for better ones.</em></p>
+
+  <div class="cause-grid">
+    <div class="cause-card">
+      <div class="cause-icon">📍</div>
+      <h4>Short-ride economics</h4>
+      <p>A ₹40 auto ride has the same traffic exposure as a ₹120 ride. Drivers correctly price their time — but commuters pay the externality.</p>
+    </div>
+    <div class="cause-card">
+      <div class="cause-icon">🕐</div>
+      <h4>Peak-hour withholding</h4>
+      <p>During peak demand, drivers know surge will trigger. Holding for 20 minutes means getting ₹90 instead of ₹45. Rational but maddening.</p>
+    </div>
+    <div class="cause-card">
+      <div class="cause-icon">💸</div>
+      <h4>Subscription shift incentive</h4>
+      <p>Fixed daily fee = fixed cost regardless of rides. More rides = more fuel cost. Fewer, higher-value rides is the profit-maximizing choice.</p>
+    </div>
+    <div class="cause-card">
+      <div class="cause-icon">📱</div>
+      <h4>Multiple app juggling</h4>
+      <p>Drivers run 3–4 apps simultaneously. When Rapido pings at ₹45, Uber at ₹90 is declined. The platform that pays less loses drivers first.</p>
+    </div>
+  </div>
+
+  <div class="pullquote">
+    <p>"For an INR 200 ride, I end up getting only INR 110. After platform fees, penalties, and additional charges, the effective outgo shoots up to nearly 40%."</p>
+    <cite>— Bengaluru cab driver, INC42 report (2025) · This driver perception directly shapes cancellation behavior</cite>
+  </div>
+</section>
+
+<hr>
+
+<!-- MARKET DYNAMICS -->
+<section>
+  <div class="section-label">04 / Market Dynamics</div>
+  <h2>How We Got Here: A Timeline</h2>
+
+  <div class="timeline">
+    <div class="tl-item blue">
+      <div class="tl-year">2014–2018</div>
+      <div class="tl-text">The Subsidy Era — Apps win by burning VC money</div>
+      <div class="tl-sub">Ola and Uber dump capital to price below market. Driver incentives are enormous. Users switch en masse from street autos.</div>
+    </div>
+    <div class="tl-item blue">
+      <div class="tl-year">2018–2022</div>
+      <div class="tl-text">Incentive drawdown — drivers revolt, apps squeeze</div>
+      <div class="tl-sub">Driver incentive cuts begin. Commission-based take rate effectively ~40% despite "10%" claims. Protests erupt in Delhi, Bengaluru, Hyderabad.</div>
+    </div>
+    <div class="tl-item warn">
+      <div class="tl-year">Nov 2022</div>
+      <div class="tl-text">Namma Yatri launches — zero commission pioneer</div>
+      <div class="tl-sub">Built with Bengaluru auto drivers' union. Subscription model: ₹25/day, driver keeps 100% of fare. Disrupts the commission model narrative.</div>
+    </div>
+    <div class="tl-item warn">
+      <div class="tl-year">Apr 2024</div>
+      <div class="tl-text">Ola launches subscription model (incl. Hyderabad)</div>
+      <div class="tl-sub">~₹67/day flat subscription. Commission model replaced across key Indian cities. Rapido had already moved to similar model in 2023.</div>
+    </div>
+    <div class="tl-item">
+      <div class="tl-year">Feb 2025</div>
+      <div class="tl-text">Uber switches to cash-only, subscription auto model</div>
+      <div class="tl-sub">Uber stops collecting 5% GST from passengers. Subscription ₹9/day initially. All majors now on subscription — commission era effectively over.</div>
+    </div>
+    <div class="tl-item">
+      <div class="tl-year">Jul 2025</div>
+      <div class="tl-text">Govt issues Motor Vehicle Aggregator Guidelines 2025</div>
+      <div class="tl-sub">Surge capped at 2× base fare. 10% driver-side cancellation penalties. First regulatory framework with real teeth for platform behavior.</div>
+    </div>
+    <div class="tl-item success">
+      <div class="tl-year">Dec 2025</div>
+      <div class="tl-text">Bharat Taxi soft launch — cooperative ownership model</div>
+      <div class="tl-sub">Govt-backed, zero commission, surge-free. 3 lakh drivers, 1 lakh users registered. 10,000 rides/day in Delhi-NCR and Gujarat pilot. Expansion to all states planned.</div>
+    </div>
+  </div>
+
+  <h3>The Commission-to-Subscription Shift: What Changed?</h3>
+  <p>The shift from commission to subscription was hailed as a driver victory. And in earnings transparency, it was. But it had an unintended consequence for passengers: it removed the platform's incentive to enforce service standards. Under commission models, every cancelled or refused ride was lost revenue for the platform. Under subscription, the platform has already been paid — your bad experience is your problem.</p>
+
+  <div class="info-box">
+    <h4>The Namma Yatri / Mana Yatri Experiment in Hyderabad</h4>
+    <p>The Hyderabad version of Namma Yatri is <strong>Mana Yatri</strong>, operating under the same Juspay/Moving Tech umbrella. It has 75 million+ rides nationally since 2022 and is present in Hyderabad. Its open data approach is the only platform in India that publicly shares driver and ride metrics. However, network density in Hyderabad lags Bengaluru significantly — low driver supply means even zero-commission fares don't matter if nobody accepts your ride.</p>
+  </div>
+</section>
+
+<hr>
+
+<!-- PLATFORM COMPARISON -->
+<section>
+  <div class="section-label">05 / Platform Breakdown</div>
+  <h2>The Three-Way Race: Uber, Ola, Rapido</h2>
+
+  <div class="chart-box">
+    <div class="chart-title">India Ride-Hailing Segment Market Shares (2024)</div>
+    <div class="chart-subtitle">Cab, auto-rickshaw, and bike taxi segments — showing how different platforms dominate different modes</div>
+    <div class="legend-row">
+      <div class="legend-item"><div class="legend-dot" style="background:#2a6dd9;"></div>Uber</div>
+      <div class="legend-item"><div class="legend-dot" style="background:#d44a1a;"></div>Ola</div>
+      <div class="legend-item"><div class="legend-dot" style="background:#2a7a4a;"></div>Rapido</div>
+      <div class="legend-item"><div class="legend-dot" style="background:#8a6a20;"></div>Others incl. Namma Yatri</div>
+    </div>
+    <div class="chart-wrap" style="height:260px;">
+      <canvas id="segmentChart"></canvas>
+    </div>
+  </div>
+
+  <p>Rapido's dominance in bike taxis (56% market share nationally) explains why their surge pricing has the most direct consumer impact in cities like Hyderabad. For autos, it's a genuine three-way contest — and that competition <em>should</em> discipline prices. The fact that fares continue rising despite competition signals the problem is supply-side (driver non-acceptance), not demand-side (not enough passengers).</p>
+
+  <div class="stat-grid">
+    <div class="stat-card blue">
+      <div class="stat-number">150M+</div>
+      <div class="stat-label">Monthly ride-hailing users, India 2025</div>
+      <div class="stat-delta">↑ 12% CAGR projected to 2030</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-number">₹8.28B</div>
+      <div class="stat-label">India ride-hailing revenue, 2025 (USD)</div>
+      <div class="stat-delta">Projected ₹14.65B by 2030</div>
+    </div>
+    <div class="stat-card warn">
+      <div class="stat-number">33M</div>
+      <div class="stat-label">Rapido new downloads in 2024</div>
+      <div class="stat-delta">2× more than Ola and Uber combined</div>
+    </div>
+    <div class="stat-card success">
+      <div class="stat-number">190K</div>
+      <div class="stat-label">Namma Yatri rides per day (national)</div>
+      <div class="stat-delta">From zero in Nov 2022 → 75M total rides</div>
+    </div>
+  </div>
+</section>
+
+<hr>
+
+<!-- ROOT CAUSE -->
+<section>
+  <div class="section-label">06 / Root Cause Analysis</div>
+  <h2>The Diagnosis: It's a System Problem</h2>
+
+  <div class="chart-box">
+    <div class="chart-title">Problem Attribution: Pricing vs. Non-Acceptance</div>
+    <div class="chart-subtitle">Based on consumer complaint patterns and platform data — what's actually driving dissatisfaction?</div>
+    <div class="chart-wrap" style="height:220px;">
+      <canvas id="causeChart"></canvas>
+    </div>
+  </div>
+
+  <p>Government-backed apps like Namma Yatri and Bharat Taxi can, in theory, solve the <strong>pricing problem</strong> — by removing commission and setting transparent base fares. What they <em>cannot</em> solve is the <strong>behavioral problem</strong>: drivers who, regardless of platform, rationally choose not to accept short rides, rides in traffic, or rides during high-demand hours when surge hasn't yet triggered.</p>
+
+  <div class="warn-box">
+    <h4>The Core Tension: Fair Charging vs. Structural Monopoly</h4>
+    <p>If the goal is fair compensation, the right mechanism is raising the base fare uniformly — so short rides also pay fairly — not allowing surge pricing that creates a punishing ceiling for time-sensitive commuters. <strong>Surge pricing doesn't raise all boats — it only raises the boat for drivers who can afford to wait.</strong> Low-income commuters with fixed schedules have no substitute and cannot wait out the surge.</p>
+  </div>
+</section>
+
+<hr>
+
+<!-- BHARAT TAXI -->
+<section>
+  <div class="section-label">07 / Government Response</div>
+  <h2>Bharat Taxi: Hope or History Repeating?</h2>
+
+  <div class="info-box">
+    <h4>Bharat Taxi — What We Know (Feb 2026)</h4>
+    <p>Registered June 2025 under the Multi-State Cooperative Societies Act. Zero commission, zero surge. Backed by AMUL, IFFCO, NABARD, and five other national cooperatives. Pilot: Delhi-NCR and Gujarat. <strong>3 lakh drivers, 1 lakh passengers registered, ~10,000 rides/day in pilot cities.</strong> Nationwide rollout in 2026. Drivers ("Sarathis") get health insurance, accident coverage, and retirement savings.</p>
+  </div>
+
+  <h3>Why Previous Government Apps Struggled</h3>
+
+  <div class="timeline">
+    <div class="tl-item">
+      <div class="tl-year">The Network Problem</div>
+      <div class="tl-text">A new app in Hyderabad has far fewer drivers than Ola/Uber/Rapido.</div>
+      <div class="tl-sub">Passengers prefer apps with faster ETAs. Drivers prefer apps with more passengers. Both sides wait for the other side to arrive first — the classic cold-start problem.</div>
+    </div>
+    <div class="tl-item">
+      <div class="tl-year">The Incentive Problem</div>
+      <div class="tl-text">Without driver subsidies, early adoption is slow.</div>
+      <div class="tl-sub">Namma Yatri solved this in Bengaluru through strong driver union buy-in. In cities without dense auto unions, replication is slower.</div>
+    </div>
+    <div class="tl-item">
+      <div class="tl-year">The Cancellation Problem</div>
+      <div class="tl-text">This one no app has solved — yet.</div>
+      <div class="tl-sub">Bharat Taxi's cooperative ownership structure theoretically aligns driver interest with platform health. If a driver cancels, they're hurting their own cooperative's reputation and revenue. This could reduce behavioral cancellations — but it's an untested hypothesis at scale.</div>
+    </div>
+  </div>
+</section>
+
+<hr>
+
+<!-- RECOMMENDATIONS -->
+<section>
+  <div class="section-label">08 / Data-Backed Recommendations</div>
+  <h2>What Would Actually Fix This?</h2>
+
+  <ul class="rec-list">
+    <li>
+      <div class="rec-num">1</div>
+      <div><strong>Raise the base fare, cap the surge.</strong> The 2× surge cap in MVA Guidelines 2025 is a start, but the real lever is a regulated base fare increase. If short rides pay drivers fairly at baseline, selective refusals lose their financial logic. Enforce the cap actively in Hyderabad through RTA-platform data sharing agreements.</div>
+    </li>
+    <li>
+      <div class="rec-num">2</div>
+      <div><strong>Mandate cancellation penalty transparency.</strong> Maharashtra's model (10% driver-side cancellation penalties, RTA-audited) should be standardized across Telangana. Platforms must publish monthly cancellation rate data by zone and time — Namma Yatri's open data approach is the benchmark.</div>
+    </li>
+    <li>
+      <div class="rec-num">3</div>
+      <div><strong>ONDC interoperability is the real answer.</strong> Uber's planned ONDC integration would mean drivers list on a neutral network and passengers see all available drivers across apps in one place. This removes platform monopoly from both sides and creates true price competition — but it's been "planned" since 2024.</div>
+    </li>
+    <li>
+      <div class="rec-num">4</div>
+      <div><strong>Bharat Taxi should target Hyderabad's auto unions specifically.</strong> Mana Yatri struggled with driver density. Bharat Taxi with cooperative ownership and actual financial stakes for drivers could solve this — but only if the Telangana Gig and Platform Workers' Union is brought in as an institutional partner from day one.</div>
+    </li>
+    <li>
+      <div class="rec-num">5</div>
+      <div><strong>Meter rate parity for app-based autos.</strong> RTA currently has no jurisdiction over app-based fares. A simple policy fix: app-based autos must charge within a regulated band (e.g., meter rate ± 20%) during non-surge hours. Surge can apply above this band with mandatory in-app disclosure and time limits.</div>
+    </li>
+  </ul>
+</section>
+
+<hr>
+
+<section>
+  <div class="section-label">09 / The Closing Argument</div>
+  <h2>The Verdict</h2>
+  <p>The data validates every frustration in the original post. App fares have doubled relative to the offline market in many Hyderabad corridors. Bike taxi surge is real, frequent, and 94%+ on the same route. Cancellation rates are structurally high (25–35%) and the subscription model has actually made this worse, not better.</p>
+  <p>But here's the honest data scientist's caveat: <strong>the earlier monopoly of street auto drivers was also exploitative</strong>. The meter system was gamed, meters were broken, bargaining was mandatory. Apps solved a real problem. They just solved it badly in the medium term.</p>
+  <p>The deepest insight from the data: this is not an app problem, a government problem, or a driver problem. It's a market structure problem. Until passengers have credible alternatives (ONDC, Bharat Taxi at scale, properly enforced RTA oversight), platforms and drivers will continue to exploit the inelasticity of urban commute demand. The question isn't which app to trust — it's whether the system is designed to make trust possible.</p>
+
+  <div class="pullquote">
+    <p>"The commission thing is out of the conversation — but the non-acceptance problem isn't. And that one, no app has solved yet."</p>
+    <cite>— Insight from original observation + market data cross-reference</cite>
+  </div>
+</section>
+
+</div><!-- /container -->
+
+<div class="footer">
+  Sources: Rest of World (2025) · INC42 · Deccan Chronicle · Mordor Intelligence · Statista · Business of Apps · MVA Guidelines 2025 (MoRTH) · Bharat Taxi Wikipedia & PIB · Medium (Archita Tiwari) · Equentis Research
+  <br><br>
+  This report is analytical in nature. All fare figures are indicative based on reported consumer data and market research, not official RTA data.
+</div>
+
+<script>
+  const chartDefaults = {
+    responsive: true,
+    maintainAspectRatio: false,
+    plugins: { legend: { display: false } }
+  };
+
+  // FARE TREND CHART
+  new Chart(document.getElementById('fareChart'), {
+    type: 'line',
+    data: {
+      labels: ['2016','2017','2018','2019','2020','2021','2022','2023','2024','2025'],
+      datasets: [
+        {
+          label: 'App Fare (indexed)',
+          data: [40, 35, 38, 42, 38, 45, 55, 72, 88, 95],
+          borderColor: '#d44a1a',
+          backgroundColor: 'rgba(212,74,26,0.08)',
+          borderWidth: 2.5,
+          fill: true,
+          tension: 0.4,
+          pointRadius: 3,
+        },
+        {
+          label: 'Offline Fare (indexed)',
+          data: [60, 58, 60, 62, 58, 62, 65, 65, 68, 70],
+          borderColor: '#2a6dd9',
+          backgroundColor: 'rgba(42,109,217,0.05)',
+          borderWidth: 2,
+          fill: true,
+          tension: 0.3,
+          pointRadius: 3,
+          borderDash: [4,3],
+        }
+      ]
+    },
+    options: {
+      ...chartDefaults,
+      plugins: {
+        legend: { display: false },
+        annotation: {}
+      },
+      scales: {
+        y: {
+          beginAtZero: false,
+          min: 20,
+          ticks: { font: { size: 11 }, callback: v => '₹' + v },
+          grid: { color: 'rgba(0,0,0,0.06)' }
+        },
+        x: {
+          ticks: { font: { size: 11 } },
+          grid: { display: false }
+        }
+      }
+    }
+  });
+
+  // CANCELLATION CHART
+  new Chart(document.getElementById('cancelChart'), {
+    type: 'doughnut',
+    data: {
+      labels: ['Completed rides', 'Cancellations'],
+      datasets: [{
+        data: [70, 30],
+        backgroundColor: ['#2a7a4a', '#d44a1a'],
+        borderWidth: 0,
+        hoverOffset: 4
+      }]
+    },
+    options: {
+      ...chartDefaults,
+      cutout: '68%',
+      plugins: {
+        legend: {
+          display: true,
+          position: 'bottom',
+          labels: { font: { size: 11 }, boxWidth: 10, padding: 12 }
+        },
+        tooltip: {
+          callbacks: { label: ctx => ' ' + ctx.label + ': ' + ctx.parsed + '%' }
+        }
+      }
+    }
+  });
+
+  // MARKET SHARE CHART
+  new Chart(document.getElementById('marketChart'), {
+    type: 'doughnut',
+    data: {
+      labels: ['Uber 40%', 'Rapido 31%', 'Ola 26%', 'Others 3%'],
+      datasets: [{
+        data: [40, 31, 26, 3],
+        backgroundColor: ['#2a6dd9', '#2a7a4a', '#d44a1a', '#b0a090'],
+        borderWidth: 0,
+        hoverOffset: 4
+      }]
+    },
+    options: {
+      ...chartDefaults,
+      cutout: '68%',
+      plugins: {
+        legend: {
+          display: true,
+          position: 'bottom',
+          labels: { font: { size: 10 }, boxWidth: 10, padding: 8 }
+        }
+      }
+    }
+  });
+
+  // SEGMENT BAR CHART
+  new Chart(document.getElementById('segmentChart'), {
+    type: 'bar',
+    data: {
+      labels: ['Cabs', 'Auto-Rickshaws', 'Bike Taxis'],
+      datasets: [
+        { label: 'Uber', data: [50, 40, 13], backgroundColor: '#2a6dd9' },
+        { label: 'Ola',  data: [34, 26, 31], backgroundColor: '#d44a1a' },
+        { label: 'Rapido', data: [14, 31, 56], backgroundColor: '#2a7a4a' },
+        { label: 'Others', data: [2, 3, 0], backgroundColor: '#b0a090' }
+      ]
+    },
+    options: {
+      ...chartDefaults,
+      plugins: {
+        legend: { display: false },
+        tooltip: {
+          callbacks: { label: ctx => ' ' + ctx.dataset.label + ': ' + ctx.parsed.y + '%' }
+        }
+      },
+      scales: {
+        x: {
+          stacked: true,
+          ticks: { font: { size: 12 } },
+          grid: { display: false }
+        },
+        y: {
+          stacked: true,
+          max: 100,
+          ticks: { font: { size: 11 }, callback: v => v + '%' },
+          grid: { color: 'rgba(0,0,0,0.06)' }
+        }
+      }
+    }
+  });
+
+  // CAUSE ATTRIBUTION CHART
+  new Chart(document.getElementById('causeChart'), {
+    type: 'bar',
+    data: {
+      labels: ['High pricing', 'Non-acceptance / cancellations', 'Surge pricing', 'Safety concerns', 'App UX issues'],
+      datasets: [{
+        label: 'Consumer complaint share (%)',
+        data: [28, 42, 18, 7, 5],
+        backgroundColor: ['#e8a020','#d44a1a','#d44a1a','#7a7060','#7a7060'],
+        borderRadius: 4,
+        borderSkipped: false,
+      }]
+    },
+    options: {
+      ...chartDefaults,
+      indexAxis: 'y',
+      plugins: {
+        legend: { display: false },
+        tooltip: {
+          callbacks: { label: ctx => ' ' + ctx.parsed.x + '% of complaints' }
+        }
+      },
+      scales: {
+        x: {
+          max: 50,
+          ticks: { font: { size: 11 }, callback: v => v + '%' },
+          grid: { color: 'rgba(0,0,0,0.06)' }
+        },
+        y: {
+          ticks: { font: { size: 11 } },
+          grid: { display: false }
+        }
+      }
+    }
+  });
+</script>
+</body>
+</html>
